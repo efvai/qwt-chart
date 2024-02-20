@@ -2,6 +2,7 @@
 #define QWTCHARTPLOT_H
 
 #include <QwtPlot>
+#include <QwtInterval>
 
 class QwtChartScrollBar;
 
@@ -23,6 +24,11 @@ protected slots:
 
 protected:
     QwtChartScrollBar *m_scrollBar = nullptr;
+
+private:
+    QwtInterval m_dataInterval;
+    QwtInterval m_visibleInterval;
+    double m_visibleIntervalLength = 5.0;
 };
 
 #endif // QWTCHARTPLOT_H

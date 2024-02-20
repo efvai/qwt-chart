@@ -1,6 +1,7 @@
 #include "qwtchartplot.h"
 
 #include "qwtchartscrollbar.h"
+#include "qwtchartmagnifier.h"
 
 #include <QDebug>
 #include <QEvent>
@@ -10,14 +11,16 @@
 #include <QwtPlotLayout>
 #include <QwtScaleWidget>
 #include <QwtInterval>
+#include <QwtPlotMagnifier>
+#include <QwtPlotCurve>
 
 QwtChartPlot::QwtChartPlot(QWidget *canvas)
     : QwtPlot(nullptr)
 {
     setCanvas(canvas);
     setCanvasBackground(Qt::white);
-    setAxisScale(QwtAxis::YLeft, 0.0, 10.0);
-    setAxisScale(QwtAxis::XBottom, 0.0, 1.0);
+    setAxisScale(QwtAxis::YLeft,  -4.0, 4.0);
+
 
     QwtPlotGrid *grid = new QwtPlotGrid();
     grid->attach(this);
@@ -30,7 +33,25 @@ QwtChartPlot::QwtChartPlot(QWidget *canvas)
     connect(axisWidget(QwtAxis::XBottom), SIGNAL(scaleDivChanged()),
             this, SLOT(updateScrollBar()));
 
-    resize(600, 400);
+    (void) new QwtChartMagnifier(canvas);
+
+    QVector<QPointF> points;
+    for (int i = 0; i < 100; i++) {
+        points.append(QPointF(i, i%4));
+    }
+    QwtPlotCurve *curve = new QwtPlotCurve();
+    curve->setPen(Qt::blue, 3);
+    curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
+    curve->setSamples(points);
+    curve->attach(this);
+
+    m_dataInterval = QwtInterval(points.first().x(), points.last().x());
+    m_visibleInterval = QwtInterval(points.last().x()
+                                        - m_visibleIntervalLength, points.last().x());
+    setAxisScale(QwtAxis::XBottom, m_visibleInterval.minValue(),
+                    m_visibleInterval.maxValue());
+
+    updateScrollBar();
     replot();
 }
 
@@ -66,6 +87,8 @@ bool QwtChartPlot::eventFilter(QObject *object, QEvent *event)
 
 void QwtChartPlot::updateScrollBar()
 {
+    qDebug() << "interval: " <<axisInterval(QwtAxis::XBottom).width();
+    m_visibleInterval = axisInterval(QwtAxis::XBottom);
     if (!canvas()) {
         return;
     }
@@ -84,10 +107,11 @@ void QwtChartPlot::updateScrollBar()
 //    layout->setAlignCanvasToScales( false );
 
     // todo: check scrollbar necessary
-    if (axisInterval(QwtAxis::XBottom).minValue() > 0) {
-        m_scrollBar->setBase(0, axisInterval(QwtAxis::XBottom).maxValue());
-        m_scrollBar->moveSlider(axisInterval(QwtAxis::XBottom).minValue(),
-                                axisInterval(QwtAxis::XBottom).maxValue());
+    if (m_visibleInterval.minValue() > 0) {
+        m_scrollBar->setBase(m_dataInterval.minValue(),
+                             m_dataInterval.maxValue());
+        m_scrollBar->moveSlider(m_visibleInterval.minValue(),
+                                m_visibleInterval.maxValue());
         if (!m_scrollBar->isVisibleTo(canvas())) {
             m_scrollBar->setPalette(palette());
             m_scrollBar->show();
@@ -120,7 +144,7 @@ void QwtChartPlot::layoutScrollBar(const QRect &rect)
 void QwtChartPlot::scrollBarMoved(double min, double max)
 {
     axisWidget(QwtAxis::XBottom)->blockSignals(true);
-    setAxisScale(QwtAxis::XBottom, min, min + m_scrollBar->maxBaseValue());
+    setAxisScale(QwtAxis::XBottom, min, max);
     replot();
     axisWidget(QwtAxis::XBottom)->blockSignals(false);
 }

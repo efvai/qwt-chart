@@ -11,11 +11,13 @@ CONFIG += c++11
 SOURCES += \
     main.cpp \
     qwtchart.cpp \
+    qwtchartmagnifier.cpp \
     qwtchartplot.cpp \
     qwtchartscrollbar.cpp
 
 HEADERS += \
     qwtchart.h \
+    qwtchartmagnifier.h \
     qwtchartplot.h \
     qwtchartscrollbar.h
 

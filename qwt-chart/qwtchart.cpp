@@ -18,6 +18,7 @@ QwtChart::QwtChart(QWidget *parent)
     l->addWidget(m_plot);
     setLayout(l);
 
+    resize(600, 400);
 }
 
 QwtChart::~QwtChart()
