@@ -5,7 +5,7 @@
 #include <QLayout>
 #include <QKeyEvent>
 
-#include  <QwtPlotCanvas>
+#include <QwtPlotCanvas>
 
 QwtChart::QwtChart(QWidget *parent)
     : QWidget(parent)
@@ -28,12 +28,7 @@ QwtChart::~QwtChart()
 void QwtChart::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Space) {
-        static int x_min = 0;
-        static int x_max = 1;
-
-        m_plot->setAxisScale(QwtAxis::XBottom, ++x_min, ++x_max);
-        m_plot->replot();
-
+        m_plot->setStart(!m_plot->start());
     }
     QWidget::keyPressEvent(event);
 }

@@ -1,5 +1,7 @@
 #include "qwtchartmagnifier.h"
 
+#include "qwtchartplot.h"
+
 #include <QDebug>
 #include <QtMath>
 
@@ -10,8 +12,10 @@ QwtChartMagnifier::QwtChartMagnifier(QWidget *canvas)
     : QwtPlotMagnifier(canvas)
 {
     setAxisEnabled(QwtAxis::YLeft, false);
-    setZoomInKey(Qt::Key_Plus, Qt::KeypadModifier);
-    setZoomOutKey(Qt::Key_Minus, Qt::KeypadModifier);
+    setZoomInKey(Qt::Key_Plus, Qt::KeypadModifier | Qt::ShiftModifier);
+    setZoomOutKey(Qt::Key_Minus, Qt::KeypadModifier | Qt::ShiftModifier);
+    setWheelFactor(0.0);
+    setMouseFactor(0.0);
     setKeyFactor(0.75);
 }
 
@@ -29,29 +33,28 @@ void QwtChartMagnifier::rescale(double factor)
     double center = 0.5 * (interval.maxValue() + interval.minValue());
     double width_2 = 0.5 * interval.width() * factor;
 
-    if (center - width_2 > 0) {
-        plot()->setAxisScale(QwtAxis::XBottom, center - width_2, center + width_2);
-        plot()->replot();
-        m_currentMagLevel += inc;
+    QwtChartPlot *chart = static_cast<QwtChartPlot*>(plot());
+
+    if ((width_2 * 2) > chart->dataInterval().width() * 1.2
+        && factor > 1.0) {
+        qInfo() << "Out of Range " << (width_2 * 2)
+                << " > " << chart->dataInterval().width() * 1.5;
+        return;
     }
-    // double newFactor = findFactor(
-    //     plot()->axisInterval(QwtAxis::XBottom).width(), factor);
-    // if (newFactor == 1.0) {
-    //     newFactor = factor;
-    // }
-    // qDebug() << "Factor: " << newFactor;
-    // setKeyFactor(newFactor);
 
-    // QwtPlotMagnifier::rescale(newFactor);
-    // m_currentMagLevel += inc;
+    chart->setVisibleIntervalLength(width_2 * 2);
+    if (center - width_2 > 0) {
+        chart->setVisibleInterval(center - width_2,
+                                  center + width_2);
+    } else {
+        chart->setVisibleInterval(0, center + width_2 * 2);
+    }
 
-    // if (plot()->axisInterval(QwtPlot::xBottom).minValue() < 0) {
-    //     QwtPlotMagnifier::rescale(1 / newFactor);
-    //     m_currentMagLevel -= inc;
-    // }
-
-
-
+    plot()->setAxisScale(QwtAxis::XBottom,
+                         chart->visibleInterval().minValue(),
+                         chart->visibleInterval().maxValue());
+    m_currentMagLevel += inc;
+    plot()->replot();
 }
 
 double QwtChartMagnifier::findFactor(double interval, double sign)

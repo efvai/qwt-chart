@@ -13,13 +13,15 @@ SOURCES += \
     qwtchart.cpp \
     qwtchartmagnifier.cpp \
     qwtchartplot.cpp \
-    qwtchartscrollbar.cpp
+    qwtchartscrollbar.cpp \
+    qwtcurvepanner.cpp
 
 HEADERS += \
     qwtchart.h \
     qwtchartmagnifier.h \
     qwtchartplot.h \
-    qwtchartscrollbar.h
+    qwtchartscrollbar.h \
+    qwtcurvepanner.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
